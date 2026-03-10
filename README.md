@@ -83,6 +83,25 @@ Options: `--verbose` / `-v` (print rule details per bookmark), `--dry-run` / `-n
 
 #### 3. `fetch` - Convert to Markdown
 
+This command requires a compatible HTTP endpoint that accepts:
+
+```http
+POST {endpoint}
+Content-Type: application/json
+
+{"url": "https://example.com/article"}
+```
+
+and returns:
+
+```json
+{"markdown": "# Article title\n..."}
+```
+
+[Web2Markdown](https://github.com/maroon1st/Web2MarkDown) (Cloudflare Workers) is the reference implementation.
+Deploy it to your own Cloudflare account and set the endpoint URL below.
+Any compatible API can be used in its place.
+
 Copy `.env.example` to `.env` and fill in your credentials:
 
 ```env
@@ -203,6 +222,25 @@ Pythonの正規表現でルールを定義してください。`filter.ini` は 
 オプション: `--verbose` / `-v`（ルール詳細を表示）、`--dry-run` / `-n`（書き込みなし）、`--config` / `-c`（INIファイル指定）。
 
 #### 3. `fetch` - Markdown取得
+
+このコマンドには、以下の契約に準拠したHTTPエンドポイントが必要です:
+
+```http
+POST {endpoint}
+Content-Type: application/json
+
+{"url": "https://example.com/article"}
+```
+
+レスポンス:
+
+```json
+{"markdown": "# 記事タイトル\n..."}
+```
+
+[Web2Markdown](https://github.com/maroon1st/Web2MarkDown)（Cloudflare Workers）が参照実装です。
+自分のCloudflareアカウントにデプロイし、エンドポイントURLを以下に設定してください。
+互換APIであれば何でも使用可能です。
 
 `.env.example` を `.env` にコピーして認証情報を設定:
 
