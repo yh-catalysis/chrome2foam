@@ -1,0 +1,49 @@
+[project]
+name = "chrome2foam"
+version = "0.1.0"
+description = "Sync Chrome bookmarks to SQLite and convert articles to Markdown via Cloudflare Workers."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "typer>=0.9",
+    "httpx>=0.24",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+chrome2foam = "chrome2foam.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chrome2foam"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "B",   # flake8-bugbear
+    "C90", # mccabe complexity
+    "I",   # isort
+    "PLC", # pylint convention
+    "TC",  # flake8-type-checking
+    "FBT", # flake8-boolean-trap
+]
+ignore = [
+    "B008",   # typer.Option() in defaults is the required Typer pattern
+    "FBT001", # boolean CLI flags with typer.Option are not function-call traps
+    "FBT003", # typer.Option(False, ...) is the standard Typer default-value form
+    "TC001",  # Article is accessed at runtime (attribute access), not type-hint only
+    "TC003",  # Path is used at runtime by Typer for argument parsing
+]
+
+[dependency-groups]
+dev = ["ruff>=0.15.5"]

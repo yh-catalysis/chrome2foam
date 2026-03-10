@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environments
+.venv/
+
+# uv
+uv.lock
+
+# mise
+mise.toml
+
+# SQLite databases
+*.db
+
+# IDE
+# Commit settings.json (formatter/linter config) but ignore everything else
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project output
+inbox/
+
+# Local docs (not for publishing)
+docs.local/
+
+# Personal filter config (use filter.ini.example as template)
+filter.ini
+
+# Local environment variables (use .env.example as template)
+.env

@@ -1,0 +1,85 @@
+# chrome2foam filter configuration
+# ==================================
+# Patterns are Python regexes matched case-insensitively.
+# Copy filter.ini.example to filter.ini and customize it to your needs.
+#
+# Each bookmark is evaluated against four rule sections in order:
+#   url_include    -> always keep  (matched against URL)
+#   url_exclude    -> ignore       (matched against URL)
+#   folder_include -> always keep  (matched against folder path, e.g. "Bar/Tech")
+#   folder_exclude -> ignore       (matched against folder path)
+#
+# The first matching rule wins.  If nothing matches, the bookmark is kept.
+# Override the order in [settings] evaluation_order.
+#
+# Syntax tips:
+#   - One pattern per line; lines starting with # are comments
+#   - .  = any single character,   .* = any sequence
+#   - ^  = start,  $ = end
+#   - Use \. to match a literal dot  (e.g. medium\.com)
+
+# ============================================================
+# [settings]  Optional global options
+# ============================================================
+[settings]
+# Customise evaluation order (comma-separated, any subset is valid):
+# evaluation_order = url_include, url_exclude, folder_include, folder_exclude
+
+# ============================================================
+# [url_include]  Always keep URLs matching these patterns.
+# Checked before url_exclude -- use this to rescue specific URLs.
+# ============================================================
+[url_include]
+patterns =
+    # (remove the leading # to activate a pattern)
+    # medium\.com/
+    # dev\.to/
+    # substack\.com/p/
+    # hashnode\.dev/
+
+# ============================================================
+# [url_exclude]  Ignore URLs matching these patterns.
+# ============================================================
+[url_exclude]
+patterns =
+    # Chrome internal pages and extensions
+    ^chrome:
+    ^chrome-extension:
+
+    # Top-level pages with no meaningful path
+    ^https?://[^/]+/?$
+
+    # Login / sign-up pages
+    /login
+    /signin
+    /signup
+    /register
+    /account
+
+    # Social media / video (uncomment to enable)
+    # twitter\.com
+    # x\.com
+    # youtube\.com
+    # instagram\.com
+    # facebook\.com
+
+    # Shopping / misc (uncomment to enable)
+    # amazon\.com
+
+# ============================================================
+# [folder_include]  Always keep bookmarks in matching folders.
+# Matched against the folder path, e.g. "Bookmarks Bar/Tech/Python".
+# ============================================================
+[folder_include]
+patterns =
+    # (remove the leading # to activate a pattern)
+    # ^Bookmarks Bar/Reading
+
+# ============================================================
+# [folder_exclude]  Ignore bookmarks in matching folders.
+# ============================================================
+[folder_exclude]
+patterns =
+    # (remove the leading # to activate a pattern)
+    # /Shopping
+    # /Social
