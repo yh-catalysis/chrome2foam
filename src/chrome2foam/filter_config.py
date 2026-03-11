@@ -44,7 +44,7 @@ DEFAULT_CONFIG_TEXT = """\
 # [settings]  Optional global options
 # ============================================================
 [settings]
-# Customise evaluation order (comma-separated, any subset is valid):
+# Customize evaluation order (comma-separated, any subset is valid):
 # evaluation_order = url_include, url_exclude, folder_include, folder_exclude
 
 # ============================================================
@@ -113,17 +113,29 @@ patterns =
 # --------------------------------------------------------------------------- #
 
 
+def ensure_example(path: Path = Path("filter.ini.example")) -> bool:
+    """Write *path* from the built-in DEFAULT_CONFIG_TEXT if it does not exist yet.
+
+    Called by ``sync`` so users always have a template to copy from.
+    Returns True when a new file was created.
+    """
+    if path.exists():
+        return False
+    path.write_text(DEFAULT_CONFIG_TEXT, encoding="utf-8")
+    return True
+
+
 def ensure_config(path: Path) -> bool:
-    """Copy filter.ini.example to *path* if it does not exist yet.
+    """Copy filter.ini.example (from cwd) to *path* if it does not exist yet.
 
     Falls back to the built-in DEFAULT_CONFIG_TEXT when the example file is
-    not available (e.g. installed via ``uv tool install``).
+    not found in the current directory.
 
     Returns True when a new file was created.
     """
     if path.exists():
         return False
-    example = Path(__file__).parent.parent.parent / "filter.ini.example"
+    example = Path("filter.ini.example")
     if example.exists():
         path.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
     else:

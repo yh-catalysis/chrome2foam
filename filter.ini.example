@@ -22,7 +22,7 @@
 # [settings]  Optional global options
 # ============================================================
 [settings]
-# Customise evaluation order (comma-separated, any subset is valid):
+# Customize evaluation order (comma-separated, any subset is valid):
 # evaluation_order = url_include, url_exclude, folder_include, folder_exclude
 
 # ============================================================
