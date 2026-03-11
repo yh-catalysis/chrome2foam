@@ -14,10 +14,48 @@ from chrome2foam.config import default_chrome_bookmarks_path
 from chrome2foam.database import get_session, init_db
 from chrome2foam.extractor import parse_bookmarks
 from chrome2foam.fetcher import fetch_markdown, save_markdown
-from chrome2foam.filter_config import ensure_config, load_rules, should_keep
+from chrome2foam.filter_config import ensure_config, ensure_example, load_rules, should_keep
 from chrome2foam.models import Article
 
 app = typer.Typer(help="chrome2foam - Sync Chrome bookmarks to Markdown inbox.")
+
+_ENV_EXAMPLE_TEXT = """\
+# chrome2foam environment variables
+# ===================================
+# Copy this file to .env and fill in your values.
+# .env contains secrets and must NOT be committed to version control.
+
+# Cloudflare Workers endpoint for the Web2Markdown API.
+# Example: https://web2markdown-worker.<your-subdomain>.workers.dev/api/fetch
+CHROME2FOAM_ENDPOINT=
+
+# Bearer token set via: npx wrangler secret put AUTH_TOKEN
+CHROME2FOAM_SECRET=
+"""
+
+
+def _ensure_env_example(path: Path = Path(".env.example")) -> bool:
+    """Write .env.example from built-in template if it does not exist yet.
+
+    Returns True when a new file was created.
+    """
+    if path.exists():
+        return False
+    path.write_text(_ENV_EXAMPLE_TEXT, encoding="utf-8")
+    return True
+
+
+def _ensure_env_in_gitignore() -> bool:
+    """Create a minimal .gitignore containing .env if no .gitignore exists in cwd.
+
+    Never modifies an existing .gitignore.
+    Returns True when a new file was created.
+    """
+    gitignore = Path(".gitignore")
+    if gitignore.exists():
+        return False
+    gitignore.write_text(".env\n*.db", encoding="utf-8")
+    return True
 
 
 def _recover_from_inbox(engine, inbox: Path) -> int:
@@ -120,6 +158,43 @@ def sync(
         if recovered:
             typer.echo(f"Recovered {recovered} articles from {inbox}.")
 
+    if ensure_example():
+        typer.echo("Created filter.ini.example  (copy to filter.ini and customize rules)")
+    if _ensure_env_example():
+        typer.echo("Created .env.example  (copy to .env and fill in your credentials)")
+    if _ensure_env_in_gitignore():
+        typer.echo("Created .gitignore with .env and *.db (add other secrets manually if needed)")
+
+
+def _evaluate_article(
+    article: Article,
+    rules: list,
+    dry_run: bool,
+    verbose: bool,
+) -> tuple[int, int, int, int]:
+    """Apply filter rules to one article.
+
+    Returns (pending_kept, pending_ignored, error_reset, error_ignored).
+    """
+    keep, reason = should_keep(article.url, article.folder_path, rules)
+    if verbose:
+        tag = "KEEP  " if keep else "IGNORE"
+        typer.echo(f"{tag}  [{reason}]  ({article.status})")
+        typer.echo(f"        url:    {article.url}")
+        typer.echo(f"        folder: {article.folder_path}")
+    orig_status = article.status
+    if keep:
+        if orig_status == "ERROR":
+            if not dry_run:
+                article.status = "PENDING"
+            return 0, 0, 1, 0
+        return 1, 0, 0, 0
+    if not dry_run:
+        article.status = "IGNORED"
+    if orig_status == "ERROR":
+        return 0, 0, 0, 1
+    return 0, 1, 0, 0
+
 
 @app.command(name="filter")
 def filter_cmd(
@@ -156,33 +231,37 @@ def filter_cmd(
 
     engine = init_db(db)
     with get_session(engine) as session:
+        total = session.query(Article).count()
+        old_pending = session.query(Article).filter(Article.status == "PENDING").count()
+        old_ignored = session.query(Article).filter(Article.status == "IGNORED").count()
+        old_error = session.query(Article).filter(Article.status == "ERROR").count()
         targets = session.query(Article).filter(Article.status.in_(["PENDING", "ERROR"])).all()
-        ignored = 0
-        reset = 0
+        pending_kept = 0
+        pending_ignored = 0
+        error_reset = 0
+        error_ignored = 0
         for article in targets:
-            keep, reason = should_keep(article.url, article.folder_path, rules)
-            if verbose:
-                tag = "KEEP  " if keep else "IGNORE"
-                typer.echo(f"{tag}  [{reason}]  ({article.status})")
-                typer.echo(f"        url:    {article.url}")
-                typer.echo(f"        folder: {article.folder_path}")
-            if keep:
-                if article.status == "ERROR":
-                    if not dry_run:
-                        article.status = "PENDING"
-                    reset += 1
-            else:
-                if not dry_run:
-                    article.status = "IGNORED"
-                ignored += 1
+            pk, pi, er, ei = _evaluate_article(article, rules, dry_run, verbose)
+            pending_kept += pk
+            pending_ignored += pi
+            error_reset += er
+            error_ignored += ei
         if not dry_run:
             session.commit()
 
-    suffix = "  (dry-run, no changes written)" if dry_run else ""
-    typer.echo(
-        f"Ignored {ignored}, reset to PENDING {reset} (from ERROR)"
-        f"  [{len(targets)} evaluated]{suffix}"
-    )
+    new_pending = pending_kept + error_reset
+    new_ignored = old_ignored + pending_ignored + error_ignored
+    nc_pending = "  (no change)" if new_pending == old_pending else ""
+    nc_ignored = "  (no change)" if new_ignored == old_ignored else ""
+    typer.echo(f"Total:   {total:>6,}")
+    typer.echo(f"PENDING: {old_pending:>6,} -> {new_pending:>6,}{nc_pending}")
+    typer.echo(f"IGNORED: {old_ignored:>6,} -> {new_ignored:>6,}{nc_ignored}")
+    if old_error:
+        typer.echo(
+            f"ERROR:   {old_error:>6,} -> PENDING: {error_reset:,}, IGNORED: {error_ignored:,}"
+        )
+    if dry_run:
+        typer.echo("(dry-run: no changes written)")
 
 
 @app.command()
@@ -208,7 +287,7 @@ def fetch(
     ),
 ) -> None:
     """Fetch Markdown for PENDING articles via Cloudflare Workers and save."""
-    load_dotenv()
+    load_dotenv(dotenv_path=Path(".env"))
 
     resolved_endpoint = endpoint or os.getenv("CHROME2FOAM_ENDPOINT")
     resolved_secret = secret or os.getenv("CHROME2FOAM_SECRET")
