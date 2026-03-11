@@ -1,6 +1,6 @@
 [project]
 name = "chrome2foam"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sync Chrome bookmarks to SQLite and convert articles to Markdown via Cloudflare Workers."
 readme = "README.md"
 license = "MIT"
