@@ -59,20 +59,44 @@ def sanitize_filename(name: str, max_bytes: int = 180) -> str:
     return name or "untitled"
 
 
+def sanitize_dirname(name: str) -> str:
+    """Replace characters that are invalid in directory names (Windows-forbidden set).
+
+    Strips ``\\ : * ? " < > |`` so each folder_path segment can be used as a real
+    directory name on all major OS.  Empty segments (e.g. trailing slash) are kept
+    as-is and filtered out by the caller.
+    """
+    name = re.sub(r'[\\:*?"<>|]', "_", name)
+    return name.strip()
+
+
 def save_markdown(
     article: Article,
     markdown_body: str,
     output_dir: str | Path,
 ) -> Path:
-    """Write Markdown with front-matter to *output_dir* and return the file path."""
+    """Write Markdown with front-matter to a subdirectory mirroring *article.folder_path*.
+
+    Given ``folder_path = "Bookmarks Bar/Tech/Python"`` and ``output_dir = "./inbox"``,
+    the file is written to ``./inbox/Bookmarks Bar/Tech/Python/<date>-<title>.md``.
+    """
     output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build subdirectory from folder_path segments
+    if article.folder_path:
+        segments = [sanitize_dirname(seg) for seg in article.folder_path.split("/")]
+        segments = [s for s in segments if s]  # drop empty segments
+        dest_dir = output_dir.joinpath(*segments) if segments else output_dir
+    else:
+        dest_dir = output_dir
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
 
     today = date.today().isoformat()
     safe_title = sanitize_filename(article.title)
     filename = f"{today}-{safe_title}.md"
 
     content = build_frontmatter(article) + markdown_body
-    dest = output_dir / filename
+    dest = dest_dir / filename
     dest.write_text(content, encoding="utf-8")
     return dest

@@ -20,6 +20,12 @@ uv tool install git+https://github.com/yh-catalysis/chrome2foam.git
 
 This makes the `chrome2foam` command available globally.
 
+To upgrade to the latest version:
+
+```bash
+uv tool upgrade chrome2foam
+```
+
 ### Local Development
 
 ```bash
@@ -149,6 +155,33 @@ chrome2foam errors
 Lists all `ERROR` articles sorted by folder path (tab-separated: `folder_path<TAB>url`).
 Run `filter` to triage errors into `IGNORED` or `PENDING`.
 
+### Migration Notes
+
+#### v0.1.x → v0.2.0 (breaking change)
+
+Starting from v0.2.0, `fetch` saves Markdown files into **subdirectories** that mirror
+the Chrome bookmark folder hierarchy, instead of a flat `inbox/` layout.
+
+Before:
+
+```txt
+inbox/
+  2026-03-09-article-title.md
+```
+
+After:
+
+```txt
+inbox/
+  Bookmarks Bar/
+    Tech/
+      2026-03-09-article-title.md
+```
+
+If you have existing flat files in `inbox/`, run `sync` once after upgrading —
+`_recover_from_inbox` now uses `rglob` and will still find them wherever they are.
+You can then manually move the flat files into the appropriate subdirectories if desired.
+
 ### License
 
 MIT
@@ -169,6 +202,12 @@ uv tool install git+https://github.com/yh-catalysis/chrome2foam.git
 ```
 
 `chrome2foam` コマンドがグローバルに利用できるようになります。
+
+最新バージョンへのアップグレード:
+
+```bash
+uv tool upgrade chrome2foam
+```
 
 ### ローカル開発
 
@@ -295,6 +334,33 @@ chrome2foam errors
 
 `ERROR` ステータスの記事をフォルダパス順で一覧表示（タブ区切り: `フォルダパス<TAB>URL`）。
 `filter` を実行してERRORを `IGNORED` または `PENDING` に振り分けてください。
+
+### マイグレーションノート
+
+#### v0.1.x → v0.2.0（破壊的変更）
+
+v0.2.0 から、`fetch` はMarkdownファイルをフラットな `inbox/` ではなく、
+Chromeブックマークのフォルダ階層を反映した**サブディレクトリ**に保存します。
+
+変更前:
+
+```txt
+inbox/
+  2026-03-09-記事タイトル.md
+```
+
+変更後:
+
+```txt
+inbox/
+  Bookmarks Bar/
+    Tech/
+      2026-03-09-記事タイトル.md
+```
+
+既存のフラットなinboxファイルがある場合は、アップグレード後に `sync` を一度実行してください。
+`_recover_from_inbox` が `rglob` に変わったため、どこにあってもファイルを検出できます。
+必要に応じて、フラットなファイルを手動で適切なサブディレクトリへ移動してください。
 
 ### ライセンス
 

@@ -62,7 +62,7 @@ def _recover_from_inbox(engine, inbox: Path) -> int:
     """Scan inbox for saved Markdown files and mark matching DB articles as FETCHED."""
     recovered = 0
     with get_session(engine) as session:
-        for md_file in sorted(inbox.glob("*.md")):
+        for md_file in sorted(inbox.rglob("*.md")):
             try:
                 text = md_file.read_text(encoding="utf-8")
             except OSError:
