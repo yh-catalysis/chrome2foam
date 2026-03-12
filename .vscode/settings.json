@@ -6,5 +6,9 @@
             "source.fixAll.ruff": "explicit",
             "source.organizeImports.ruff": "explicit"
         }
-    }
+    },
+    "files.watcherExclude": {
+        "inbox/**": true,
+    },
+    "search.useIgnoreFiles": false
 }

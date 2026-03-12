@@ -35,6 +35,9 @@ inbox/
 # Local docs (not for publishing)
 docs.local/
 
+# Local scripts (not for publishing)
+scripts.local/
+
 # Personal filter config (use filter.ini.example as template)
 filter.ini
 
