@@ -18,8 +18,8 @@
     },
     "packageRules": [
         {
-            "matchManagers": [
-                "uv"
+            "matchFileNames": [
+                "pyproject.toml"
             ],
             "rangeStrategy": "widen"
         }
