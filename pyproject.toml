@@ -45,5 +45,11 @@ ignore = [
     "TC003",  # Path is used at runtime by Typer for argument parsing
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [dependency-groups]
-dev = ["ruff>=0.15.5"]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.15.5",
+]
