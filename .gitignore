@@ -10,9 +10,6 @@ build/
 # Virtual environments
 .venv/
 
-# uv
-uv.lock
-
 # mise
 mise.toml
 

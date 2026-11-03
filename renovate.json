@@ -1,27 +1,51 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended"
-    ],
-    "timezone": "UTC",
-    "schedule": [
-        "on saturday"
-    ],
-    "vulnerabilityAlerts": {
-        "enabled": true,
-        "labels": [
-            "security"
-        ],
-        "schedule": [
-            "at any time"
-        ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "dev-toolkit の templates/common/renovate.json と同じ方針。違いはロックファイル保守の schedule と Python の上限だけ",
+    "packageRules は後勝ち（同じ項目を設定する複数のルールが一致したら、後のルールが前を上書きする）。all-non-major は必ず先頭に置く。後ろに置くと、後続のグループの groupName と automerge を minor / patch で全部上書きする",
+    "schedule と updateNotScheduled: false の組で、通常の更新は土曜にだけ PR を作り・作り直す。schedule だけでは、開いている PR の作り直しは止まらない。Renovate 自体は曜日に関係なく走るが、スケジュール外では PR を作らない",
+    "スケジュール外では自動マージも起きない。土曜の終日にしているのは、PR の作成から CI を経て自動マージまでが枠に収まるようにするため",
+    "ロックファイル保守も土曜の終日にする。before 6am on saturday だと、枠内に Renovate が走らない週は PR が作られないことがある。枠を広げると PR の作り直しの機会が増えるが、このリポジトリは公開で Actions の枠を消費しないので、確実に出るほうを取る。テンプレートは CI の枠を節約するため before 6am のままなので、この設定を非公開リポジトリにそのまま写さない。schedule を消すと既定の before 4am on monday になるので明示する",
+    "pyproject.toml の依存は下限だけの指定なので、Renovate は下限を書き換えず、使う版はロックファイル保守で上がる。下限は動作に必要な版を示すもので、最新を指す必要がない",
+    "脆弱性の PR は vulnerabilityAlerts の schedule: [] により、曜日に関係なく即時に出る",
+    "検証: npx --yes --package renovate renovate-config-validator"
+  ],
+  "extends": ["config:best-practices"],
+  "osvVulnerabilityAlerts": true,
+  "timezone": "Asia/Tokyo",
+  "schedule": ["on saturday"],
+  "updateNotScheduled": false,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "【フォールバック】minor / patch / digest を1本にまとめる。★先頭から動かさない★",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "all-non-major",
+      "groupSlug": "all-non-major"
     },
-    "packageRules": [
-        {
-            "matchFileNames": [
-                "pyproject.toml"
-            ],
-            "rangeStrategy": "widen"
-        }
-    ]
+    {
+      "description": "【自動マージ】GitHub Actions の minor / patch / digest。CI が通れば Renovate がマージする。major は除く",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "groupName": "github-actions",
+      "groupSlug": "gha",
+      "automerge": true
+    },
+    {
+      "description": "【Python】.python-version は 3.14 で止める。Dependabot の依存グラフのジョブが対応する Python は 2026-10 時点で 3.14 までで、このツールに 3.15 を使う理由も今はない。Dependabot が対応したら外す",
+      "matchManagers": ["pyenv"],
+      "matchPackageNames": ["python"],
+      "allowedVersions": "<3.15"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["on saturday"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "groupName": null,
+    "schedule": [],
+    "labels": ["security"]
+  }
 }
